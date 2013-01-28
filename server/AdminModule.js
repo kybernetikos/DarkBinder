@@ -20,12 +20,14 @@ AdminModule.prototype.userConnecting = function(user, app, socket) {
 };
 
 /*
+	An example message that configures the handler for the main page.
 		{
-			appPath: 'http://adami:8081',
+			appPath: 'http://localhost:8081/index.html',
 			action: 'module.load',
 			user: 'kybernetikos',
 			repository: 'DarkBinder',
-			path: 'example/TestApp.js'
+			path: 'example/TestApp.js',
+			branch: 'gh-pages'
 		}
  */
 AdminModule.prototype.onMessage = function(user, app, socket, message) {

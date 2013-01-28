@@ -84,7 +84,7 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 	var app = {
 		url: appUrl,
 		path: appUrl.protocol+"//"+appUrl.host+appUrl.pathname,
-		origin: handshakeData.headers.origin
+		origin: handshakeData.headers.origin || (appUrl.protocol+"//"+appUrl.host)
 	};
 	handshakeData.app = app;
 	var assertion = handshakeData.query.assertion;
@@ -92,6 +92,7 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 		handshakeData.user = {email: 'kybernetikos@gmail.com'};
 		callback(null, true);
 	} else {
+		console.log('verifying assertion', app.origin, assertion);
 		persona.verify(assertion, app.origin, function(response) {
 			if (response.status == 'okay') {
 				handshakeData.user = {
@@ -101,6 +102,7 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 				};
 				callback(null, true);
 			} else {
+				console.log(response);
 				callback(response.reason, false);
 			}
 		});
