@@ -1,0 +1,26 @@
+<html>
+<body>
+
+An admin page.
+
+<button id='signin' onclick='navigator.id.request();'>Sign In</button>
+<button id='signout' onclick='navigator.id.logout();'>Sign Out</button>
+<button onclick='registerIndexApp();'>Register</button>
+
+<!-- Scripts -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://login.persona.org/include.js"></script>
+<script src="OneClient.js"></script>
+<script>
+	function registerIndexApp() {
+		socket.emit('message', {
+			appPath: 'http://localhost:8081/index.html',
+			action: 'module.load',
+			user: 'kybernetikos',
+			repository: 'DarkBinder',
+			path: 'example/TestApp.js'
+		});
+	}
+</script>
+</body>
+</html>
