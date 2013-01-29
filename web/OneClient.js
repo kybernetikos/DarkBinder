@@ -7,6 +7,10 @@ function socketIOConnect(assertion) {
 	socket.on('message', function(data) {
 		console.log('msg',data);
 	});
+    
+    socket.on('disconnect', function() {
+        console.log('disconnected');
+    });
 }
 
 var currentUser = null;
