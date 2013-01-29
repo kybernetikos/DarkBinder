@@ -1,0 +1,3 @@
+git commit any changes
+git push origin to update github
+git push heroku-target gh-pages:master to update heroku.

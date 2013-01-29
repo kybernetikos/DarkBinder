@@ -15,6 +15,7 @@ var Server = function(port) {
 Server.prototype.initialiseModules = function() {
 	this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'] = new AdminModule(this.modules);
 	this.modules['http://localhost:8081/admin.html'] = this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'];
+    this.modules['http://darkbinder.herokuapp.com/admin.html'] = this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'];
 };
 
 Server.prototype.start = function() {
