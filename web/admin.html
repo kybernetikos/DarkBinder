@@ -52,7 +52,7 @@
 
 	function registerIndexApp() {
 		msgArea.innerHTML = "Sending command.";
-		var githubFile = doucment.getElementById('github').value;
+		var githubFile = document.getElementById('github').value;
 		var pathBranch = githubFile.split(":");
 		var branch = undefined;
 		if (pathBranch.length > 1) {
