@@ -1,0 +1,16 @@
+<html>
+<head>
+</head>
+<body>
+Hello world
+
+<button id='signin' onclick='navigator.id.request();'>Sign In</button>
+<button id='signout' onclick='navigator.id.logout();'>Sign Out</button>
+<button id='send' onclick='socket.emit("message", {data: "jim"});'>Send Hello</button>
+
+<!-- Scripts -->
+<script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
+<script src="https://login.persona.org/include.js"></script>
+<script src="OneClient.js"></script>
+</body>
+</html>

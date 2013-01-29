@@ -1,16 +1,101 @@
 <html>
-<head>
-</head>
 <body>
-Hello world
+
+<h1>Add App Handler</h1>
+
+<p>This page allows you (and by <em>you</em> I mean users who are allowed to), to set up an app/github js file mapping.</p>
 
 <button id='signin' onclick='navigator.id.request();'>Sign In</button>
 <button id='signout' onclick='navigator.id.logout();'>Sign Out</button>
-<button id='send' onclick='socket.emit("message", {data: "jim"});'>Send Hello</button>
+
+<div id="entry" style='display: none'>
+	<input style='width: 400px' type="text" id="appPath" value="http://adami:8081/test.html" />
+	<input style='width: 400px' type="text" id="github" value="kybernetikos/DarkBinder/example/TestApp.js:gh-pages" />
+	<button onclick="registerIndexApp('github');">Register Github</button>
+	<input style='width: 400px' type="text" id="serverpath" value="TestApp.js" />
+	<button onclick="registerIndexApp('serverpath');">Register Server Code</button>
+	<h2>Currently Registered Apps</h2>
+	<ul id="currentApps"></ul>
+	<textarea style='width: 800px' id="message">Not currently signed in.</textarea>
+</div>
 
 <!-- Scripts -->
 <script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
 <script src="https://login.persona.org/include.js"></script>
-<script src="OneClient.js"></script>
+<script>
+	var socket = null;
+	var msgArea = document.getElementById('message');
+
+	function socketIOConnect(assertion) {
+		//socket = io.connect('https://darkbinder.herokuapp.com/?assertion='+assertion);
+		socket = io.connect('/?assertion='+assertion);
+		msgArea.innerHTML = "Signed in, connecting...";
+
+		socket.on('message', function(data) {
+			var element = document.getElementById('currentApps');
+			element.innerHTML = '';
+			if (data.currentModules) {
+				for (var i = 0; i < data.currentModules.length; ++i) {
+					var li = document.createElement('li');
+					li.appendChild(document.createTextNode(data.currentModules[i]));
+					element.appendChild(li);
+				}
+			}
+			msgArea.innerHTML = "RESPONSE: "+JSON.stringify(data);
+		});
+
+		socket.on('disconnect', function() {
+			msgArea.innerHTML = "Disconnected.";
+		});
+	}
+
+	var currentUser = null;
+	navigator.id.watch({
+		loggedInUser: currentUser,
+		onlogin: function(assertion) {
+			document.getElementById('entry').style.display = '';
+			msgArea.innerHTML = "Signed in.";
+			socketIOConnect(assertion);
+		},
+		onlogout: function() {
+			msgArea.innerHTML = "Logging out.";
+			document.getElementById('entry').style.display = 'none';
+			if (socket != null) socket.disconnect();
+		}
+	});
+
+	function registerIndexApp(source) {
+		msgArea.innerHTML = "Sending command.";
+		if (source =='github') {
+			var githubFile = document.getElementById('github').value;
+			var pathBranch = githubFile.split(":");
+			var branch = undefined;
+			if (pathBranch.length > 1) {
+				branch = pathBranch[1];
+			}
+			var parts = pathBranch[0].split("/");
+			var user = parts.shift();
+			var repository = parts.shift();
+
+			var commandPayload = {
+				appPath: document.getElementById('appPath').value,
+				action: 'module.load.github',
+
+				user: user,
+				branch: branch,
+				repository: repository,
+				path: parts.join("/")
+			};
+		} else {
+			var commandPayload = {
+				appPath: document.getElementById('appPath').value,
+				action: 'module.load.require',
+				path: document.getElementById(source).value
+			};
+		}
+		console.log('sending', commandPayload);
+		socket.emit('message', commandPayload);
+	}
+</script>
 </body>
 </html>

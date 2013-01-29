@@ -5,6 +5,7 @@ var persona = require("./PersonaVerify.js");
 var vm = require('vm');
 var Module = require('./Module.js');
 var AdminModule = require('./AdminModule.js');
+var Config = require('./Config.js');
 
 var Server = function(port) {
 	this.port = port;	this.modules = {};
@@ -13,9 +14,10 @@ var Server = function(port) {
 };
 
 Server.prototype.initialiseModules = function() {
-	var adminModule = new AdminModule(this.modules);
-	this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'] = adminModule;
-	this.modules['http://darkbinder.herokuapp.com/admin.html'] = adminModule;
+	var adminModule = AdminModule;
+	this.modules['http://kybernetikos.github.com/DarkBinder/index.html'] = adminModule;
+	this.modules['http://darkbinder.herokuapp.com/index.html'] = adminModule;
+	this.modules['http://adami:8081/index.html'] = adminModule;
 };
 
 Server.prototype.start = function() {
@@ -28,8 +30,10 @@ Server.prototype.start = function() {
 	io.configure(function () {
 		/* Web sockets is not current supported on heroku :-( although they promise
 		 * to support it eventually. */
-		io.set("transports", ["xhr-polling"]);
-		io.set("polling duration", 10);
+		if ( ! Config.useWebsocket) {
+			io.set("transports", ["xhr-polling"]);
+			io.set("polling duration", 10);
+		}
 		io.set("log level", 2);
 		io.set('authorization', function (handshakeData, callback) {
 			this.verifyLogin(handshakeData, callback);
@@ -69,13 +73,16 @@ Server.prototype.getHandler = function(appPath, io) {
 			console: console
 		});
 		serverHandler.runInContext(ctx);
-
 		serverHandler = mod.exports;
-		if (typeof serverHandler == 'function') {
-			serverHandler = new serverHandler();
-		}
 		this.modules[appPath] = serverHandler;
-		serverHandler.initialise(appPath, io.sockets.in(appPath));
+	}
+	if (typeof serverHandler == 'function') {
+		serverHandler = new serverHandler(this);
+		serverHandler.initialise(appPath, {emit: function(eventName, data) {
+			console.log('emitting to room', appPath);
+			io.sockets.in(appPath).emit(eventName, data);
+		}});
+		this.modules[appPath] = serverHandler;
 	}
 	return serverHandler;
 };
@@ -89,20 +96,27 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 	};
 	handshakeData.app = app;
 	var assertion = handshakeData.query.assertion;
-	console.log('verifying assertion', app.origin, assertion);
-	persona.verify(assertion, app.origin, function(response) {
-		if (response.status == 'okay') {
-			handshakeData.user = {
-				email: response.email,
-				issuer: response.issuer,
-				loginExpires: response.expires
-			};
-			callback(null, true);
-		} else {
-			console.log(response);
-			callback(response.reason, false);
-		}
-	});
+
+	if (Config.useAuth) {
+		console.log('verifying assertion', app.origin, assertion);
+		persona.verify(assertion, app.origin, function(response) {
+			if (response.status == 'okay') {
+				handshakeData.user = {
+					email: response.email,
+					issuer: response.issuer,
+					loginExpires: response.expires
+				};
+				callback(null, true);
+			} else {
+				console.log(response);
+				callback(response.reason, false);
+			}
+		});
+	} else {
+		handshakeData.user = {email: 'kybernetikos@gmail.com', issuer: 'fake', loginExpires: 0};
+		callback(null, true);
+	}
+
 };
 
 module.exports = Server;

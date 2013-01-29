@@ -1,8 +1,4 @@
-function AdamIApp() {
-	Module.call(this);
-}
-
-AdamIApp.prototype = Object.create(Module.prototype);
+function AdamIApp() {}
 
 AdamIApp.prototype.initialise = function(app, room) {
 	this.app = app;
@@ -14,7 +10,7 @@ AdamIApp.prototype.userConnecting = function(user, app, socket) {
 };
 
 AdamIApp.prototype.onMessage = function(user, app, socket, message) {
-	console.log('received message', message, 'from', user);
+	console.log('received message', message, 'from', user, 'app', app.path);
 	// republish to everyone
 	this.room.emit('message', message);
 };
