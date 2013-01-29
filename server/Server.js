@@ -13,9 +13,9 @@ var Server = function(port) {
 };
 
 Server.prototype.initialiseModules = function() {
-	this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'] = new AdminModule(this.modules);
-	this.modules['http://localhost:8081/admin.html'] = this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'];
-    this.modules['http://darkbinder.herokuapp.com/admin.html'] = this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'];
+	var adminModule = new AdminModule(this.modules);
+	this.modules['http://kybernetikos.github.com/DarkBinder/admin.html'] = adminModule;
+	this.modules['http://darkbinder.herokuapp.com/admin.html'] = adminModule;
 };
 
 Server.prototype.start = function() {
@@ -89,25 +89,20 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 	};
 	handshakeData.app = app;
 	var assertion = handshakeData.query.assertion;
-	if (assertion == 'testassertion') {
-		handshakeData.user = {email: 'kybernetikos@gmail.com'};
-		callback(null, true);
-	} else {
-		console.log('verifying assertion', app.origin, assertion);
-		persona.verify(assertion, app.origin, function(response) {
-			if (response.status == 'okay') {
-				handshakeData.user = {
-					email: response.email,
-					issuer: response.issuer,
-					loginExpires: response.expires
-				};
-				callback(null, true);
-			} else {
-				console.log(response);
-				callback(response.reason, false);
-			}
-		});
-	}
+	console.log('verifying assertion', app.origin, assertion);
+	persona.verify(assertion, app.origin, function(response) {
+		if (response.status == 'okay') {
+			handshakeData.user = {
+				email: response.email,
+				issuer: response.issuer,
+				loginExpires: response.expires
+			};
+			callback(null, true);
+		} else {
+			console.log(response);
+			callback(response.reason, false);
+		}
+	});
 };
 
 module.exports = Server;
