@@ -27,8 +27,8 @@ Server.prototype.start = function() {
 	io.configure(function () {
 		/* Web sockets is not current supported on heroku :-( although they promise
 		 * to support it eventually. */
-		//io.set("transports", ["xhr-polling"]);
-		//io.set("polling duration", 10);
+		io.set("transports", ["xhr-polling"]);
+		io.set("polling duration", 10);
 		io.set("log level", 2);
 		io.set('authorization', function (handshakeData, callback) {
 			this.verifyLogin(handshakeData, callback);
