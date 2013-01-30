@@ -7,9 +7,10 @@
 
 <button id='signin' onclick='navigator.id.request();'>Sign In</button>
 <button id='signout' onclick='navigator.id.logout();'>Sign Out</button>
+<button onclick='socketIOConnect("testassertion");'>Connect without logging in</button> (only if the server has auth turned off).
 
 <div id="entry" style='display: none'>
-	<input style='width: 400px' type="text" id="appPath" value="http://adami:8081/test.html" />
+	<input style='width: 400px' type="text" id="appPath" value="http://localhost:8081/test.html" />
 	<input style='width: 400px' type="text" id="github" value="kybernetikos/DarkBinder/example/TestApp.js:gh-pages" />
 	<button onclick="registerIndexApp('github');">Register Github</button>
 	<input style='width: 400px' type="text" id="serverpath" value="TestApp.js" />
@@ -20,14 +21,16 @@
 </div>
 
 <!-- Scripts -->
-<script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
+<script src="/socket.io/socket.io.js"></script>
 <script src="https://login.persona.org/include.js"></script>
 <script>
 	var socket = null;
 	var msgArea = document.getElementById('message');
 
 	function socketIOConnect(assertion) {
-		//socket = io.connect('https://darkbinder.herokuapp.com/?assertion='+assertion);
+		document.getElementById('entry').style.display = '';
+		msgArea.innerHTML = "Signed in.";
+
 		socket = io.connect('/?assertion='+assertion);
 		msgArea.innerHTML = "Signed in, connecting...";
 
@@ -50,19 +53,19 @@
 	}
 
 	var currentUser = null;
-	navigator.id.watch({
-		loggedInUser: currentUser,
-		onlogin: function(assertion) {
-			document.getElementById('entry').style.display = '';
-			msgArea.innerHTML = "Signed in.";
-			socketIOConnect(assertion);
-		},
-		onlogout: function() {
-			msgArea.innerHTML = "Logging out.";
-			document.getElementById('entry').style.display = 'none';
-			if (socket != null) socket.disconnect();
-		}
-	});
+	if (navigator.id && navigator.id.watch) {
+		navigator.id.watch({
+			loggedInUser: currentUser,
+			onlogin: function(assertion) {
+				socketIOConnect(assertion);
+			},
+			onlogout: function() {
+				msgArea.innerHTML = "Logging out.";
+				document.getElementById('entry').style.display = 'none';
+				if (socket != null) socket.disconnect();
+			}
+		});
+	}
 
 	function registerIndexApp(source) {
 		msgArea.innerHTML = "Sending command.";

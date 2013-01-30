@@ -17,7 +17,7 @@ Server.prototype.initialiseModules = function() {
 	var adminModule = AdminModule;
 	this.modules['http://kybernetikos.github.com/DarkBinder/index.html'] = adminModule;
 	this.modules['http://darkbinder.herokuapp.com/index.html'] = adminModule;
-	this.modules['http://adami:8081/index.html'] = adminModule;
+	this.modules['http://localhost:8081/index.html'] = adminModule;
 };
 
 Server.prototype.start = function() {
@@ -25,6 +25,10 @@ Server.prototype.start = function() {
 	var app = express.createServer();
 	app.listen(this.port);
 	app.use(express["static"](__dirname+"/../web"));
+
+	if (Config.useAuth == false) {
+		console.log('WARNING: not using authentication - should only be used for testing.');
+	}
 
 	var io = require('socket.io').listen(app);
 	io.configure(function () {
@@ -116,7 +120,6 @@ Server.prototype.verifyLogin = function(handshakeData, callback) {
 		handshakeData.user = {email: 'kybernetikos@gmail.com', issuer: 'fake', loginExpires: 0};
 		callback(null, true);
 	}
-
 };
 
 module.exports = Server;
