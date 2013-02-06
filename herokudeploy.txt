@@ -1,3 +1,15 @@
+One time setup:
+
+	heroku config:add USE_AUTH=true --app darkbinder
+	heroku config:add USE_WEBSOCKET=false --app darkbinder
+
+------------------------
+Each time:
+
 git commit any changes
-git push origin to update github
-git push heroku-target gh-pages:master to update heroku.
+
+update github
+	git push origin
+Update heroku (currently configured on c9)
+	git push heroku-target gh-pages:master
+
