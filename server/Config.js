@@ -2,6 +2,7 @@ var devMode = (process.env.DEVMODE !== undefined ? Boolean(process.env.DEVMODE) 
 
 module.exports = {
 	useWebsocket: (process.env.USE_WEBSOCKET !== undefined ? Boolean(process.env.USE_WEBSOCKET) : true),
+	gitHubUsers: ["kybernetikos", "shikaga"],
 	adminAppPaths: devMode ? {
 		"http://localhost:8081/admin/": true
 	} : {

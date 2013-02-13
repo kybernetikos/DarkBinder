@@ -3,11 +3,16 @@ var express = require('express');
 var url = require('url');
 var Config = require('./Config.js');
 var SessionKeeper = require('./SessionKeeper.js');
+var Utils = require('./Utils.js');
 
 var Server = function(port) {
 	this.port = port;
 	this.handlerCache = {};
 	this.sessionKeeper = new SessionKeeper();
+	this.gitHubUsers = {};
+	for (var i = 0; i < Config.gitHubUsers.length; ++i) {
+		this.gitHubUsers[Config.gitHubUsers[i]] = true;
+	}
 };
 
 Server.prototype.start = function() {
@@ -73,6 +78,16 @@ Server.prototype.requireHandlerFinder = function(app, notfound, callback, failba
 			failback(e);
 		}
 	}
+};
+
+Server.prototype.githubHandlerFinder = function(app, notfound, callback, failback) {
+	// TODO: finish this
+	var hostParts = app.url.hostname.split(".");
+	var pathParts = app.url.path.split("/");
+	var githubUser = hostParts[0];
+	var githubRepository = pathParts[1];
+	pathParts.slice(2).join("/");
+	// Utils.scriptFromGitHub(githubUser, githubRepository, path, branch, onSuccess);
 };
 
 Server.prototype.lookupHandler = function(app, callback, failback) {
