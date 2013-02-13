@@ -4,6 +4,7 @@ var url = require('url');
 var Config = require('./Config.js');
 var SessionKeeper = require('./SessionKeeper.js');
 var Utils = require('./Utils.js');
+var fs = require('fs');
 
 var Server = function(port) {
 	this.port = port;
@@ -61,24 +62,22 @@ Server.prototype.onConnect = function(socket) {
 };
 
 Server.prototype.requireHandlerFinder = function(app, notfound, callback, failback) {
-	var fileName = app.path.replace(/[:\\\/\.]/g, "_");
-	console.log('checking path',fileName);
-	try {
-		var Handler = require('../handlers/'+fileName+".js");
-		var handler = new Handler();
-		callback(handler);
-	} catch (e) {
-		console.log(e.code);
-		if (e.code === 'MODULE_NOT_FOUND') {
-			// TODO: it should be an error rather than a notfound if this fails because of a MODULE_NOT_FOUND error
-			// while loading the file or inside the constructor or callback.
-			notfound();
+	var fileName = '../handlers/'+app.path.replace(/[:\\\/\.]/g, "_")+".js";
+	fs.exists(fileName, function (exists) {
+		if (exists) {
+			try {
+				var Handler = require(fileName);
+				var handler = new Handler();
+				callback(handler);
+			} catch (e) {
+				console.log('Failed to instantiate handler for app '+app.path);
+				console.log(e.stack.toString());
+				failback(e);
+			}
 		} else {
-			console.log('Failed to instantiate handler for app '+app.path);
-			console.log(e.stack.toString());
-			failback(e);
+			notfound();
 		}
-	}
+	});
 };
 
 Server.prototype.githubHandlerFinder = function(app, notfound, callback, failback) {
