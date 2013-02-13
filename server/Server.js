@@ -19,23 +19,8 @@ var Server = function(port) {
 Server.prototype.start = function() {
 	console.log('Server listening on port '+this.port);
 
-	function allowCrossDomain(req, res, next) {
-		res.header('Access-Control-Allow-Origin', '*');
-		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-		res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
-
-		// intercept OPTIONS method
-		if ('OPTIONS' == req.method) {
-			res.send(200);
-		}
-		else {
-			next();
-		}
-	};
-
 	var app = express.createServer();
 	app.listen(this.port);
-	app.use(allowCrossDomain);
 	app.use(express["static"](__dirname+"/../web"));
 	app.get('/admin/', function(req,res) {
 		res.sendfile(require.resolve(__dirname+'/../web/admin/index.html'));
@@ -165,6 +150,7 @@ Server.prototype.getHandler = function(app, callback, failback) {
 };
 
 Server.prototype.getApp = function getApp(io, headers) {
+	if (headers.referer == null) return null;
 	var appUrl = url.parse(headers.referer, true);
 	var appPath = appUrl.protocol + "//" + appUrl.host + appUrl.pathname;
 	var app = {
@@ -196,6 +182,10 @@ Server.prototype.getApp = function getApp(io, headers) {
 
 Server.prototype.verifyLogin = function(io, handshakeData, callback) {
 	var app = this.getApp(io, handshakeData.headers);
+	if (app == null) {
+		callback("Unable to get the app.", false);
+		return;
+	}
 	handshakeData.app = app;
 
 	this.getHandler(app, function(handler) {
