@@ -1,13 +1,18 @@
 var persona = require("../server/PersonaVerify.js");
 var Config = require("../server/Config.js");
 
-function AdminHandler(services) {
-	this.services = services;
+function AdminHandler() {
 	this.server = null;
 }
 
 AdminHandler.prototype.setServer = function(server) {
 	this.server = server;
+	this.server.sessionKeeper.on("added", function(session) {
+		console.log("Session added", session.toString());
+	});
+	this.server.sessionKeeper.on("removed", function(session) {
+		console.log("Session removed", session.toString());
+	});
 	console.log('server set');
 };
 
@@ -31,13 +36,13 @@ AdminHandler.prototype.authorise = function(app, query, callback) {
 
 AdminHandler.prototype.onMessage = function(user, app, socket, message) {
 	console.log('received message', user.email, app.path, message);
-	this.services.broadcast({msg: message, user: user.email});
+	app.services.broadcast({msg: message, user: user.email});
 };
 
 AdminHandler.prototype.userConnecting = function(user, app, socket) {
 	console.log('user',user.email,'connecting');
 	socket.emit('message', { message: 'welcome to this server!' });
-	this.services.join(socket);
+	app.services.join(socket);
 };
 
 AdminHandler.prototype.userDisconnecting = function(user, app, socket) {

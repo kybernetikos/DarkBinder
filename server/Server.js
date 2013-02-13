@@ -1,12 +1,13 @@
 var https = require('https');
 var express = require('express');
 var url = require('url');
-var crypto = require('crypto');
 var Config = require('./Config.js');
+var SessionKeeper = require('./SessionKeeper.js');
 
 var Server = function(port) {
 	this.port = port;
 	this.handlerCache = {};
+	this.sessionKeeper = new SessionKeeper();
 };
 
 Server.prototype.start = function() {
@@ -22,6 +23,7 @@ Server.prototype.start = function() {
 	});
 
 	var io = require('socket.io').listen(app);
+	this.io = io;
 	io.configure(function () {
 		/* Web sockets is not current supported on heroku :-( although they promise
 		 * to support it eventually. */
@@ -35,79 +37,110 @@ Server.prototype.start = function() {
 	if (Config.devMode === true) {
 		console.log("Running in DevMode, this is not secure and should not be used on a publicly deployed system.");
 	}
-	io.sockets.on('connection', this.onConnect.bind(this, io));
+	io.sockets.on('connection', this.onConnect.bind(this));
 };
 
-Server.prototype.onConnect = function(io, socket) {
+Server.prototype.onConnect = function(socket) {
 	var app = socket.handshake.app, user = socket.handshake.user;
-	this.getHandler(io, app, function(handler) {
+	this.getHandler(app, function(handler) {
 		socket.on('message', handler.onMessage.bind(handler, user, app, socket));
-		socket.on('disconnect', handler.userDisconnecting.bind(handler, user, app, socket));
+		socket.on('disconnect', function() {
+			this.sessionKeeper.remove(app, user, socket);
+			handler.userDisconnecting(user, app, socket);
+		}.bind(this));
+		this.sessionKeeper.add(app, user, socket);
 		handler.userConnecting(user, app, socket);
-	}, function() {
+	}.bind(this), function() {
 		socket.disconnect();
 	});
 };
 
-Server.prototype.lookupHandler = function(services, app, callback, failback) {
+Server.prototype.requireHandlerFinder = function(app, notfound, callback, failback) {
 	var fileName = app.path.replace(/[:\\\/\.]/g, "_");
+	console.log('checking path',fileName);
 	try {
 		var Handler = require('../handlers/'+fileName+".js");
-		var handler = new Handler(services);
-		if (Config.adminAppPaths[app.path] === true) {
-			handler.setServer(this);
-		}
+		var handler = new Handler();
 		callback(handler);
 	} catch (e) {
-		failback(e);
+		if (e.code === 'MODULE_NOT_FOUND') {
+			// TODO: it should be an error rather than a notfound if this fails because of a MODULE_NOT_FOUND error
+			// while loading the file or inside the constructor or callback.
+			notfound();
+		} else {
+			console.log('Failed to instantiate handler for app '+app.path);
+			console.log(e.stack.toString());
+			failback(e);
+		}
 	}
 };
 
-Server.prototype.getHandler = function(io, app, callback, failback) {
+Server.prototype.lookupHandler = function(app, callback, failback) {
+	var finders = [
+			this.requireHandlerFinder.bind(this)
+	];
+	var i = 0;
+	function notFound() {
+		i = i+1;
+		if (i < finders.length) {
+			var finder = finders[i];
+			finder(app, notFound, callback, failback);
+		} else {
+			failback("Unable to find a handler for app "+app.path);
+		}
+	}
+	finders[0](app, notFound, callback, failback);
+};
+
+Server.prototype.getHandler = function(app, callback, failback) {
 	if (this.handlerCache[app.path]) {
 		callback(this.handlerCache[app.path]);
 	} else {
-		var services = {
+		this.lookupHandler(app, function(handler) {
+			this.handlerCache[app.path] = handler;
+			if (Config.adminAppPaths[app.path] === true) {
+				handler.setServer(this);
+			}
+			callback(handler);
+		}.bind(this), failback);
+	}
+};
+
+Server.prototype.getApp = function getApp(io, headers) {
+	var appUrl = url.parse(headers.referer, true);
+	var appPath = appUrl.protocol + "//" + appUrl.host + appUrl.pathname;
+	var app = {
+		url: appUrl,
+		path: appPath,
+		origin: headers.origin || (appUrl.protocol + "//" + appUrl.host),
+		services: {
 			join: function(room, socket) {
 				if (socket === undefined) {
 					socket = room;
 					room = "";
 				}
-				socket.join(app.path+":"+room);
+				socket.join(appPath+":"+room);
 			},
 			leave: function(room, socket) {
-				socket.leave(app.path+":"+room);
+				socket.leave(appPath+":"+room);
 			},
 			broadcast: function(room, data) {
 				if (data === undefined) {
 					data = room;
 					room = "";
 				}
-				io.sockets.in(app.path+":"+room).emit('message', data)
+				io.sockets.in(appPath+":"+room).emit('message', data)
 			}
-		};
-		this.lookupHandler(services, app, function(handler) {
-			this.handlerCache[app.path] = handler;
-			callback(handler);
-		}.bind(this), failback);
-	}
-};
-
-Server.prototype.getApp = function getApp(headers) {
-	var appUrl = url.parse(headers.referer, true);
-	var app = {
-		url: appUrl,
-		path: appUrl.protocol + "//" + appUrl.host + appUrl.pathname,
-		origin: headers.origin || (appUrl.protocol + "//" + appUrl.host)
+		}
 	};
 	return app;
 };
 
 Server.prototype.verifyLogin = function(io, handshakeData, callback) {
-	var app = this.getApp(handshakeData.headers);
+	var app = this.getApp(io, handshakeData.headers);
 	handshakeData.app = app;
 
-	this.getHandler(io, app, function(handler) {
+	this.getHandler(app, function(handler) {
 		handler.authorise(app, handshakeData.query, function(user, error) {
 			if (error != null) {
 				callback(error, false);

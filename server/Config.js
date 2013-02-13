@@ -5,7 +5,7 @@ module.exports = {
 	adminAppPaths: devMode ? {
 		"http://localhost:8081/admin/": true
 	} : {
-
+		"http://darkbinder.herokuapp.com/admin/": true
 	},
 	devMode: devMode
 };
