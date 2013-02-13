@@ -24,16 +24,21 @@ AdminHandler.prototype.setServer = function(server) {
 		});
 		console.log("Session removed", session.toString());
 	}.bind(this));
-	console.log('server set');
+	this.server.logKeeper.on('log', function(logMsg) {
+		this.app.services.broadcast("log", {msg: logMsg});
+	}.bind(this));
+};
+
+
+AdminHandler.prototype.prepare = function(app) {
+	this.app = app;
 };
 
 AdminHandler.prototype.authorise = function(app, query, callback) {
-	if (this.app == null)  {
-		this.app = app;
-	}
 	if (Config.devMode === true) {
 		callback({
-			email: "kybernetikos@gmail.com"
+			email: "kybernetikos@gmail.com",
+			id: "kybernetikos@gmail.com"
 		});
 	} else {
 		persona.authorisor(app.origin, query.assertion, function(user, error) {
@@ -58,6 +63,7 @@ AdminHandler.prototype.userConnecting = function(user, app, socket) {
 	socket.emit('message', { message: 'welcome to this server!' });
 	app.services.join(socket);
 	app.services.join("sessions", socket);
+	app.services.join("log", socket);
 };
 
 AdminHandler.prototype.userDisconnecting = function(user, app, socket) {

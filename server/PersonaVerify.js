@@ -18,6 +18,7 @@ module.exports = {
 				var md5 = crypto.createHash('md5');
 				md5.update(response.email.trim().toLowerCase());
 				var user = {
+					id: response.email,
 					email: response.email,
 					hash: md5.digest('hex'),
 					issuer: response.issuer,

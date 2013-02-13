@@ -8,7 +8,7 @@ function Session(app, user, socket) {
 
 Session.prototype.toString = function() {
 	return "<<Session "+this.app.path+" "+this.user.email+" "+this.socket.id+">>";
-}
+};
 
 function SessionKeeper() {
 	EventEmitter.call(this);
@@ -20,7 +20,7 @@ SessionKeeper.prototype = Object.create(EventEmitter.prototype);
 
 SessionKeeper.prototype.add = function(app, user, socket) {
 	var session = new Session(app, user, socket);
-	var userSessions = (this.byUser[user.email] = this.byUser[user.email] || {});
+	var userSessions = (this.byUser[user.id] = this.byUser[user.id] || {});
 	userSessions[socket.id] = session;
 	var appSessions = (this.byApp[app.path] = this.byApp[user.path] || {});
 	appSessions[socket.id] = session;
@@ -28,7 +28,7 @@ SessionKeeper.prototype.add = function(app, user, socket) {
 };
 
 SessionKeeper.prototype.remove = function(app, user, socket) {
-	var userSessions = this.byUser[user.email] || {};
+	var userSessions = this.byUser[user.id] || {};
 	var appSessions = this.byApp[user.path] || {};
 	var session = userSessions[socket.id] || appSessions[socket.id];
 	delete userSessions[socket.id];

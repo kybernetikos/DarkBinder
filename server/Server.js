@@ -5,12 +5,15 @@ var Config = require('./Config.js');
 var SessionKeeper = require('./SessionKeeper.js');
 var Utils = require('./Utils.js');
 var fs = require('fs');
+var LogKeeper = require('./LogKeeper.js');
 
 var Server = function(port) {
 	this.port = port;
 	this.handlerCache = {};
 	this.sessionKeeper = new SessionKeeper();
+	this.logKeeper = new LogKeeper();
 	this.gitHubUsers = {};
+	this.githubHandlerCache = {};
 	for (var i = 0; i < Config.gitHubUsers.length; ++i) {
 		this.gitHubUsers[Config.gitHubUsers[i]] = true;
 	}
@@ -63,9 +66,10 @@ Server.prototype.onConnect = function(socket) {
 };
 
 Server.prototype.requireHandlerFinder = function(app, notfound, callback, failback) {
-	var fileName = '../handlers/'+app.path.replace(/[:\\\/\.]/g, "_")+".js";
+	var fileName = __dirname+'/../handlers/'+app.path.replace(/[:\\\/\.]/g, "_")+".js";
 	fs.stat(fileName, function (err, stats) {
 		if ( ! err && stats.isFile() ) {
+			console.log(fileName+" found ");
 			try {
 				var Handler = require(fileName);
 				var handler = new Handler();
@@ -76,6 +80,7 @@ Server.prototype.requireHandlerFinder = function(app, notfound, callback, failba
 				failback(e);
 			}
 		} else {
+			console.log(fileName+" not found ");
 			notfound();
 		}
 	});
@@ -90,6 +95,11 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 		notfound();
 	} else {
 		var githubRepository = pathParts[1];
+		var cachedHandler = this.githubHandlerCache[githubUser+":"+githubRepository];
+		if (cachedHandler) {
+			callback(cachedHandler);
+			return;
+		}
 		Utils.scriptFromGitHub(githubUser, githubRepository, "darkbinder/Handler.js", "gh-pages", function(script) {
 			var mod = {exports: {}}
 			try {
@@ -103,6 +113,7 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 						}
 				});
 				var handler = new mod.exports();
+				this.githubHandlerCache[githubUser+":"+githubRepository] = handler;
 				callback(handler);
 			} catch (e) {
 				console.log('Failed to instantiate github handler for app '+app.path);
@@ -140,6 +151,7 @@ Server.prototype.getHandler = function(app, callback, failback) {
 		callback(this.handlerCache[app.path]);
 	} else {
 		this.lookupHandler(app, function(handler) {
+			handler.prepare(app);
 			this.handlerCache[app.path] = handler;
 			if (Config.adminAppPaths[app.path] === true) {
 				handler.setServer(this);
@@ -174,7 +186,8 @@ Server.prototype.getApp = function getApp(io, headers) {
 					room = "";
 				}
 				io.sockets.in(appPath+":"+room).emit('message', data)
-			}
+			},
+			log: this.logKeeper.log.bind(this.logKeeper)
 		}
 	};
 	return app;
