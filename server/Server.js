@@ -18,8 +18,24 @@ var Server = function(port) {
 
 Server.prototype.start = function() {
 	console.log('Server listening on port '+this.port);
+
+	function allowCrossDomain(req, res, next) {
+		res.header('Access-Control-Allow-Origin', '*');
+		res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+		res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+
+		// intercept OPTIONS method
+		if ('OPTIONS' == req.method) {
+			res.send(200);
+		}
+		else {
+			next();
+		}
+	};
+
 	var app = express.createServer();
 	app.listen(this.port);
+	app.use(allowCrossDomain);
 	app.use(express["static"](__dirname+"/../web"));
 	app.get('/admin/', function(req,res) {
 		res.sendfile(require.resolve(__dirname+'/../web/admin/index.html'));
@@ -37,7 +53,6 @@ Server.prototype.start = function() {
 			io.set("transports", ["xhr-polling"]);
 			io.set("polling duration", 10);
 		}
-		io.set( 'origins', '*' );
 		io.set("log level", 2);
 		io.set('authorization', this.verifyLogin.bind(this, io));
 	}.bind(this));
