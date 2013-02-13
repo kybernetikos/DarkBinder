@@ -85,14 +85,29 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 	var hostParts = app.url.hostname.split(".");
 	var pathParts = app.url.path.split("/");
 	var githubUser = hostParts[0];
-	var githubRepository = pathParts[1];
-	pathParts.slice(2).join("/");
-	// Utils.scriptFromGitHub(githubUser, githubRepository, path, branch, onSuccess);
+	if (this.gitHubUsers[githubUser] !== true) {
+		notfound();
+	} else {
+		var githubRepository = pathParts[1];
+		Utils.scriptFromGitHub(githubUser, githubRepository, "darkbinder/Handler.js", "gh-pages", function(script) {
+			var mod = {exports: {}}
+			try {
+				script.runInNewContext({'module': mod});
+				var handler = new mod.exports();
+				callback(handler);
+			} catch (e) {
+				console.log('Failed to instantiate github handler for app '+app.path);
+				console.log(e.stack.toString());
+				failback(e);
+			}
+		}.bind(this));
+	}
 };
 
 Server.prototype.lookupHandler = function(app, callback, failback) {
 	var finders = [
-			this.requireHandlerFinder.bind(this)
+			this.requireHandlerFinder.bind(this),
+			this.githubHandlerFinder.bind(this)
 	];
 	var i = 0;
 	function notFound() {
