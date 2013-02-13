@@ -9,6 +9,7 @@ Hello world
 <button id='send' onclick='socket.emit("message", {data: "jim"});'>Send Hello</button>
 
 <script type="text/javascript">
+	var server = "http://localhost:8081";
 
 	function onConnect(socket) {
 		window.socket = socket;

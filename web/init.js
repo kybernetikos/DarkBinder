@@ -3,7 +3,7 @@
 	var socket = null;
 
 	function connect(assertion) {
-		socket = io.connect('/?assertion='+assertion);
+		socket = io.connect(server+'/?assertion='+assertion);
 		if (window.onConnect) {
 			window.onConnect(socket);
 		}
