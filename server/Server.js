@@ -100,7 +100,11 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 				console.log(e.stack.toString());
 				failback(e);
 			}
-		}.bind(this));
+		}.bind(this), function(e) {
+			console.log('Error instantiating github handler for app '+app.path);
+			console.log(e);
+			failback(e);
+		});
 	}
 };
 

@@ -30,7 +30,8 @@ module.exports =  {
 		request.end();
 	},
 
-	scriptFromGitHub: function(user, repository, path, branch, onSuccess) {
+	scriptFromGitHub: function(user, repository, path, branch, onSuccess, onFail) {
+		console.log("http://"+user+".github.com/"+repository+path+"  : "+branch);
 		github.repos.getContent(
 			{
 				user:user,
@@ -39,10 +40,14 @@ module.exports =  {
 				ref:branch
 			},
 			function(err, data) {
-				var encodedData = data.content;
-				var content = new Buffer(encodedData, 'base64').toString();
-				var script = vm.createScript(content, user+"/"+repository+"/"+path );
-				onSuccess(script);
+				if (err) {
+					onFail(err);
+				} else {
+					var encodedData = data.content;
+					var content = new Buffer(encodedData, 'base64').toString();
+					var script = vm.createScript(content, user+"/"+repository+"/"+path );
+					onSuccess(script);
+				}
 			}
 		);
 	}
