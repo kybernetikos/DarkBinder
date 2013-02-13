@@ -7,7 +7,7 @@ function Session(app, user, socket) {
 }
 
 Session.prototype.toString = function() {
-	return "<Session "+this.app.path+" "+this.user.email+" "+this.socket.id+">";
+	return "<<Session "+this.app.path+" "+this.user.email+" "+this.socket.id+">>";
 }
 
 function SessionKeeper() {
