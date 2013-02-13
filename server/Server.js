@@ -64,8 +64,8 @@ Server.prototype.onConnect = function(socket) {
 
 Server.prototype.requireHandlerFinder = function(app, notfound, callback, failback) {
 	var fileName = '../handlers/'+app.path.replace(/[:\\\/\.]/g, "_")+".js";
-	fs.exists(fileName, function (exists) {
-		if (exists) {
+	fs.stat(fileName, function (err, stats) {
+		if ( ! err && stats.isFile() ) {
 			try {
 				var Handler = require(fileName);
 				var handler = new Handler();
