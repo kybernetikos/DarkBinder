@@ -31,7 +31,7 @@ module.exports =  {
 	},
 
 	scriptFromGitHub: function(user, repository, path, branch, onSuccess, onFail) {
-		console.log("http://"+user+".github.com/"+repository+path+"  : "+branch);
+		console.log("http://"+user+".github.com/"+repository+"/"+path+"  : "+branch);
 		github.repos.getContent(
 			{
 				user:user,

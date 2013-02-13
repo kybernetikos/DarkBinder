@@ -68,6 +68,7 @@ Server.prototype.requireHandlerFinder = function(app, notfound, callback, failba
 		var handler = new Handler();
 		callback(handler);
 	} catch (e) {
+		console.log(e.code);
 		if (e.code === 'MODULE_NOT_FOUND') {
 			// TODO: it should be an error rather than a notfound if this fails because of a MODULE_NOT_FOUND error
 			// while loading the file or inside the constructor or callback.
@@ -85,7 +86,7 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 	var hostParts = app.url.hostname.split(".");
 	var pathParts = app.url.path.split("/");
 	var githubUser = hostParts[0];
-	if (this.gitHubUsers[githubUser] !== true) {
+	if (this.gitHubUsers[githubUser] !== true || app.url.hostname != githubUser+".github.com") {
 		notfound();
 	} else {
 		var githubRepository = pathParts[1];
