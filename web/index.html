@@ -21,28 +21,31 @@ Hello world
 		server
 <script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
 <script src="https://login.persona.org/include.js"></script>
+<script src="init.js"></script>
 -->
 
 <script>
 	// to run against your local server, add ?server=http://localhost:8081
 	// to not load the persona code, add &noauth=true
-
 	var query = {};
 	window.location.search.replace(/[?&]([^&=]+)(?:=([^&]*))?/g, function(_,key,value) {query[key] = value==undefined?true:value; return ""});
 	var server = query.server || "https://darkbinder.herokuapp.com";
 
+	console.log(query, server);
+
 	var srcs = [
-		server+'/socket.io/socket.io.js',
+		server+'/socket.io/socket.io.js'
 	];
 
 	if (query.noauth != 'true') {
 		srcs.push("https://login.persona.org/include.js");
 	}
 
-	for (var i = 0; i < srcs; ++i) {
+	srcs.push("init.js");
+
+	for (var i = 0; i < srcs.length; ++i) {
 		document.write('<scr'+'ipt src="'+srcs[i]+'"></scr'+'ipt>');
 	}
 </script>
-<script src="init.js"></script>
 </body>
 </html>
