@@ -37,6 +37,7 @@ Server.prototype.start = function() {
 			io.set("transports", ["xhr-polling"]);
 			io.set("polling duration", 10);
 		}
+		io.set( 'origins', '*' );
 		io.set("log level", 2);
 		io.set('authorization', this.verifyLogin.bind(this, io));
 	}.bind(this));
