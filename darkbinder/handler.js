@@ -13,7 +13,7 @@ ExampleHandler.prototype.onMessage = function(user, app, socket, message) {
 
 ExampleHandler.prototype.userConnecting = function(user, app, socket) {
 	console.log('user',user.email,'connecting');
-	socket.emit('message', { message: 'welcome to this server!' });
+	socket.emit('message', { message: 'welcome to this server with a handler from github!' });
 	app.services.join(socket);
 };
 
