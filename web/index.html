@@ -9,8 +9,6 @@ Hello world
 <button id='send' onclick='socket.emit("message", {data: "jim"});'>Send Hello</button>
 
 <script type="text/javascript">
-	var server = "http://localhost:8081";
-
 	function onConnect(socket) {
 		window.socket = socket;
 		console.log('connected');
@@ -18,10 +16,33 @@ Hello world
 			console.log('msg', data);
 		})
 	}
-
 </script>
-<script src="http://localhost:8081/socket.io/socket.io.js"></script>
+<!-- just do this if you aren't concerned about running against a development
+		server
+<script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
 <script src="https://login.persona.org/include.js"></script>
+-->
+
+<script>
+	// to run against your local server, add ?server=http://localhost:8081
+	// to not load the persona code, add &noauth=true
+
+	var query = {};
+	window.location.search.replace(/[?&]([^&=]+)(?:=([^&]*))?/g, function(_,key,value) {query[key] = value==undefined?true:value; return ""});
+	var server = query.server || "https://darkbinder.herokuapp.com";
+
+	var srcs = [
+		server+'/socket.io/socket.io.js',
+	];
+
+	if (query.noauth != 'true') {
+		srcs.push("https://login.persona.org/include.js");
+	}
+
+	for (var i = 0; i < srcs; ++i) {
+		document.write('<scr'+'ipt src="'+srcs[i]+'"></scr'+'ipt>');
+	}
+</script>
 <script src="init.js"></script>
 </body>
 </html>

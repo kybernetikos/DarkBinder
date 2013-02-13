@@ -1,4 +1,13 @@
 (function() {
+	var query = {};
+	window.location.search.replace(/[?&]([^&=]+)(?:=([^&]*))?/g, function(_,key,value) {query[key] = value==undefined?true:value; return ""});
+
+	// var server = "http://localhost:8081";
+	var server = "https://darkbinder.herokuapp.com/";
+
+	if (query.server) {
+		server = query.server;
+	}
 
 	var socket = null;
 

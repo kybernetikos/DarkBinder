@@ -1,8 +1,16 @@
+var persona = require("PersonaVerify");
+
 function ExampleHandler() {}
 
 ExampleHandler.prototype.authorise = function(app, query, callback) {
-	callback({
-		email: "testuser@email.com"
+	persona.authorisor(app.origin, query.assertion, function(user, error) {
+		if (error) {
+			callback(null, error);
+		} else if (user.email === 'kybernetikos@gmail.com') {
+			callback(user);
+		} else {
+			callback(null, "not permitted");
+		}
 	});
 };
 

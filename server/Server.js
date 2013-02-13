@@ -92,7 +92,15 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 		Utils.scriptFromGitHub(githubUser, githubRepository, "darkbinder/Handler.js", "gh-pages", function(script) {
 			var mod = {exports: {}}
 			try {
-				script.runInNewContext({'module': mod});
+				script.runInNewContext({
+						'module': mod,
+						'console': console,
+						'require': function(requirement) {
+							if (requirement == 'PersonaVerify') { return require('./PersonaVerify.js')};
+							if (requirement.indexOf('.') >= 0) throw new Error("Not allowed to require "+requirement);
+							return require(requirement);
+						}
+				});
 				var handler = new mod.exports();
 				callback(handler);
 			} catch (e) {
