@@ -14,10 +14,6 @@ ExampleHandler.prototype.authorise = function(app, query, callback) {
 	});
 };
 
-ExampleHandler.prototype.prepare = function(app) {
-
-};
-
 ExampleHandler.prototype.onMessage = function(user, app, socket, message) {
 	app.services.log('received message', user.email, app.path, message);
 	app.services.broadcast({msg: message, user: user.email});
@@ -31,6 +27,10 @@ ExampleHandler.prototype.userConnecting = function(user, app, socket) {
 
 ExampleHandler.prototype.userDisconnecting = function(user, app, socket) {
 	app.services.log('user',user,'disconnecting');
+};
+
+ExampleHandler.getHandler = function(app) {
+	return new ExampleHandler();
 };
 
 module.exports = ExampleHandler;

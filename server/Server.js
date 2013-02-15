@@ -72,7 +72,7 @@ Server.prototype.requireHandlerFinder = function(app, notfound, callback, failba
 			console.log(fileName+" found ");
 			try {
 				var Handler = require(fileName);
-				var handler = new Handler();
+				var handler = Handler.getHandler(app);
 				callback(handler);
 			} catch (e) {
 				console.log('Failed to instantiate handler for app '+app.path);
@@ -95,9 +95,10 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 		notfound();
 	} else {
 		var githubRepository = pathParts[1];
-		var cachedHandler = this.githubHandlerCache[githubUser+":"+githubRepository];
-		if (cachedHandler) {
-			callback(cachedHandler);
+		var cachedHandlerCreator = this.githubHandlerCache[githubUser+":"+githubRepository];
+		if (cachedHandlerCreator) {
+			var handler = cachedHandlerCreator.getHandler(app);
+			callback(handler);
 			return;
 		}
 		Utils.scriptFromGitHub(githubUser, githubRepository, "darkbinder/Handler.js", "gh-pages", function(script) {
@@ -112,8 +113,8 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 							return require(requirement);
 						}
 				});
-				var handler = new mod.exports();
-				this.githubHandlerCache[githubUser+":"+githubRepository] = handler;
+				this.githubHandlerCache[githubUser+":"+githubRepository] = mod.exports;
+				var handler = mod.exports.getHandler(app);
 				callback(handler);
 			} catch (e) {
 				console.log('Failed to instantiate github handler for app '+app.path);
@@ -151,7 +152,6 @@ Server.prototype.getHandler = function(app, callback, failback) {
 		callback(this.handlerCache[app.path]);
 	} else {
 		this.lookupHandler(app, function(handler) {
-			handler.prepare(app);
 			this.handlerCache[app.path] = handler;
 			if (Config.adminAppPaths[app.path] === true) {
 				handler.setServer(this);

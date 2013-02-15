@@ -1,4 +1,7 @@
-(function() {
+window.onload = (function() {
+
+	var io = window.io;
+
 	var query = {};
 	window.location.search.replace(/[?&]([^&=]+)(?:=([^&]*))?/g, function(_,key,value) {query[key] = value==undefined?true:value; return ""});
 
@@ -31,4 +34,4 @@
 		});
 	}
 
-})();
+});

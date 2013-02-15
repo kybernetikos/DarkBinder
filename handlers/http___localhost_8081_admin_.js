@@ -1,9 +1,9 @@
 var persona = require("../server/PersonaVerify.js");
 var Config = require("../server/Config.js");
 
-function AdminHandler() {
+function AdminHandler(app) {
 	this.server = null;
-	this.app = null;
+	this.app = app;
 }
 
 AdminHandler.prototype.setServer = function(server) {
@@ -27,11 +27,6 @@ AdminHandler.prototype.setServer = function(server) {
 	this.server.logKeeper.on('log', function(logMsg) {
 		this.app.services.broadcast("log", {msg: logMsg});
 	}.bind(this));
-};
-
-
-AdminHandler.prototype.prepare = function(app) {
-	this.app = app;
 };
 
 AdminHandler.prototype.authorise = function(app, query, callback) {
@@ -68,6 +63,10 @@ AdminHandler.prototype.userConnecting = function(user, app, socket) {
 
 AdminHandler.prototype.userDisconnecting = function(user, app, socket) {
 	console.log('user',user,'disconnecting');
+};
+
+AdminHandler.getHandler = function(app) {
+	return new AdminHandler(app);
 };
 
 module.exports = AdminHandler;
