@@ -28,6 +28,7 @@
 	var elements = getElements(["UserAuthentication", "signin", "signout", "log"]);
 
 	function log() {
+		var atBottom = elements.log.scrollTop + elements.log.clientHeight === elements.log.scrollHeight;
 		var pre = "";
 		var post = "";
 		var data = [];
@@ -51,6 +52,9 @@
 			}
 		}
 		elements.log.innerHTML += (new Date().toISOString()).replace(/[^T]*T/, "") + " :\t" + pre + data.join(" ") + post + "\n";
+		if (atBottom) {
+			elements.log.scrollTop = elements.log.scrollHeight - elements.log.clientHeight;
+		}
 	}
 
 	elements.signin.onclick = function() {
