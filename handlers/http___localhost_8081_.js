@@ -28,15 +28,14 @@ ExampleHandler.prototype.onMessage = function(user, app, socket, message) {
 };
 
 ExampleHandler.prototype.userConnecting = function(user, app, socket) {
-	app.services.log('user',user.email,'connecting');
+	app.services.log('user',user.email,'connecting to', app.path);
 	socket.emit('message', { message: 'welcome to this server!' });
 	app.services.join(socket);
 };
 
 ExampleHandler.prototype.userDisconnecting = function(user, app, socket) {
-	app.services.log('user',user,'disconnecting');
+	app.services.log('user',user.email,'disconnecting from', app.path);
 };
-
 
 ExampleHandler.getHandler = function(app) {
 	return new ExampleHandler();

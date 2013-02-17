@@ -69,21 +69,19 @@ Server.prototype.requireHandlerFinder = function(app, notfound, callback, failba
 	var fileName = __dirname+'/../handlers/'+app.path.replace(/[:\\\/\.]/g, "_")+".js";
 	fs.stat(fileName, function (err, stats) {
 		if ( ! err && stats.isFile() ) {
-			console.log(fileName+" found ");
 			try {
 				var Handler = require(fileName);
 				var handler = Handler.getHandler(app);
+				this.logKeeper.log(app, "Loaded handler from file", fileName);
 				callback(handler);
 			} catch (e) {
-				console.log('Failed to instantiate handler for app '+app.path);
-				console.log(e.stack.toString());
+				this.logKeeper.log(app, "Failed to instantiate handler from file.", e.stack.toString());
 				failback(e);
 			}
 		} else {
-			console.log(fileName+" not found ");
 			notfound();
 		}
-	});
+	}.bind(this));
 };
 
 Server.prototype.githubHandlerFinder = function(app, notfound, callback, failback) {
@@ -115,15 +113,14 @@ Server.prototype.githubHandlerFinder = function(app, notfound, callback, failbac
 				});
 				this.githubHandlerCache[githubUser+":"+githubRepository] = mod.exports;
 				var handler = mod.exports.getHandler(app);
+				this.logKeeper.log(app, "Loaded handler from github.");
 				callback(handler);
 			} catch (e) {
-				console.log('Failed to instantiate github handler for app '+app.path);
-				console.log(e.stack.toString());
+				this.logKeeper.log(app, "Failed to instantiate handler from github.", e.stack.toString());
 				failback(e);
 			}
 		}.bind(this), function(e) {
-			console.log('Error instantiating github handler for app '+app.path);
-			console.log(e);
+			this.logKeeper.log(app, "Failed to instantiate handler from github.", e.stack.toString());
 			failback(e);
 		});
 	}
@@ -151,9 +148,11 @@ Server.prototype.getHandler = function(app, callback, failback) {
 	if (this.handlerCache[app.path]) {
 		callback(this.handlerCache[app.path]);
 	} else {
+		this.logKeeper.log(app, "First client requested handler, locating.");
 		this.lookupHandler(app, function(handler) {
 			this.handlerCache[app.path] = handler;
 			if (Config.adminAppPaths[app.path] === true) {
+				this.logKeeper.log(app, "Handler has admin capabilities.");
 				handler.setServer(this);
 			}
 			callback(handler);
@@ -186,10 +185,10 @@ Server.prototype.getApp = function getApp(io, headers) {
 					room = "";
 				}
 				io.sockets.in(appPath+":"+room).emit('message', data)
-			},
-			log: this.logKeeper.log.bind(this.logKeeper)
+			}
 		}
 	};
+	app.services.log = this.logKeeper.log.bind(this.logKeeper, app);
 	return app;
 };
 

@@ -26,7 +26,7 @@ ExampleHandler.prototype.userConnecting = function(user, app, socket) {
 };
 
 ExampleHandler.prototype.userDisconnecting = function(user, app, socket) {
-	app.services.log('user',user,'disconnecting');
+	app.services.log('user',user.email,'disconnecting');
 };
 
 ExampleHandler.getHandler = function(app) {

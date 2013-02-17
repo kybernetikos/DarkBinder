@@ -1,0 +1,33 @@
+html, body {
+    margin: 0px;
+    padding: 0px;
+    font-family: Corbel, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "DejaVu Sans", "Bitstream Vera Sans", "Liberation Sans", Verdana, "Verdana Ref", sans-serif;
+}
+
+#UserAuthentication {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 6px;
+    text-align: right;
+    width: 150px;
+    overflow: hidden;
+}
+#UserAuthentication a {
+    margin-bottom: 40px;
+}
+
+#log {
+    box-sizing: border-box;
+    border: none;
+    width: 100%;
+    height: 400px;
+    color: #90ee90;
+    background-color: black;
+}
+
+h1 {
+    margin: 0px;
+    font-size: 2em;
+    font-weight: normal;
+}

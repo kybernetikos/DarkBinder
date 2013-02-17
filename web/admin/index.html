@@ -1,52 +1,83 @@
+<!doctype html>
 <html>
 <head>
+	<title>DarkBinder Server Admin</title>
+	<link rel="stylesheet" href="persona-buttons.css" />
+	<link rel="StyleSheet" href="style.css" type="text/css" />
 </head>
 <body>
-Hello world
+<h1>DarkBinder Server Admin</h1>
 
-<button id='signin' onclick='navigator.id.request();'>Sign In</button>
-<button id='signout' onclick='navigator.id.logout();'>Sign Out</button>
-<button id='send' onclick='socket.emit("message", {data: "jim"});'>Send Hello</button>
+<div id="UserAuthentication">
+	<a id="signin" href="#" class="persona-button"><span>Sign In</span></a>
+	<a id="signout" href="#" class="persona-button"><span>Sign Out</span></a>
+</div>
 
+<textarea id='log'></textarea>
+
+<button id='send' onclick='socket.emit("message", "Hello");'>Send Hello</button>
+
+<script src="loader.js" type="text/javascript"></script>
 <script type="text/javascript">
-	function onConnect(socket) {
+
+	function getElements(names) {
+		var elements = {};
+		names.forEach(function(name) {elements[name] = document.getElementById(name);});
+		return elements;
+	};
+	var elements = getElements(["UserAuthentication", "signin", "signout", "log"]);
+
+	function log() {
+		var pre = "";
+		var post = "";
+		var data = [];
+		for (var i = 0; i < arguments.length; ++i) {
+			var arg = arguments[i];
+			if (arg.app) {
+				pre +="["+arg.app.path+"]\t";
+				delete arg.app;
+			}
+			if (arg.user) {
+				pre += "["+arg.user.email + "]\t";
+				delete arg.user;
+			}
+			if (arg.message) {
+				arg = arg.message;
+			}
+			if (typeof arg === 'object' && arg.toString === Object.prototype.toString) {
+				data.push(JSON.stringify(arg));
+			} else {
+				data.push(arg);
+			}
+		}
+		elements.log.innerHTML += (new Date().toISOString()).replace(/[^T]*T/, "") + " :\t" + pre + data.join(" ") + post + "\n";
+	}
+
+	elements.signin.onclick = function() {
+		navigator.id.request();
+	};
+
+	elements.signout.onclick = function() {
+		navigator.id.logout();
+	};
+
+	DarkBinder.initialise(function(socket) {
 		window.socket = socket;
-		console.log('connected');
 		socket.on("message", function(data) {
-			console.log('msg', data);
-		})
-	}
-</script>
+			log(data);
+		});
+	}, function() {
+		log("Logged in.");
+		elements.signin.style.display = 'none';
+		elements.signout.style.display = 'inline-block';
+		elements.UserAuthentication.style.display = 'block';
+	}, function() {
+		log("Logged out.");
+		elements.signin.style.display = 'inline-block';
+		elements.signout.style.display = 'none';
+		elements.UserAuthentication.style.display = 'block';
+	});
 
-<!-- just do this if you aren't concerned about running against a development
-		server
-<script src="https://darkbinder.herokuapp.com/socket.io/socket.io.js"></script>
-<script src="https://login.persona.org/include.js"></script>
-<script src="init.js"></script>
--->
-
-<script>
-	// to run against your local server, add ?server=http://localhost:8081
-	// to not load the persona code, add &noauth=true
-	var query = {};
-	window.location.search.replace(/[?&]([^&=]+)(?:=([^&]*))?/g, function(_,key,value) {query[key] = value==undefined?true:value; return ""});
-	var server = query.server || "https://darkbinder.herokuapp.com";
-
-	console.log(query, server);
-
-	var srcs = [
-		server+'/socket.io/socket.io.js'
-	];
-
-	if (query.noauth != 'true') {
-		srcs.push("https://login.persona.org/include.js");
-	}
-
-	srcs.push("../init.js");
-
-	for (var i = 0; i < srcs.length; ++i) {
-		document.write('<scr'+'ipt src="'+srcs[i]+'"></scr'+'ipt>');
-	}
 </script>
 </body>
 </html>

@@ -24,8 +24,8 @@ AdminHandler.prototype.setServer = function(server) {
 		});
 		console.log("Session removed", session.toString());
 	}.bind(this));
-	this.server.logKeeper.on('log', function(logMsg) {
-		this.app.services.broadcast("log", {msg: logMsg});
+	this.server.logKeeper.on('log', function(app, logMsg) {
+		this.app.services.broadcast("log", {app: app, message: logMsg});
 	}.bind(this));
 };
 
@@ -49,8 +49,7 @@ AdminHandler.prototype.authorise = function(app, query, callback) {
 };
 
 AdminHandler.prototype.onMessage = function(user, app, socket, message) {
-	console.log('received message', user.email, app.path, message);
-	app.services.broadcast({msg: message, user: user.email});
+	app.services.broadcast({message: message, user: user});
 };
 
 AdminHandler.prototype.userConnecting = function(user, app, socket) {
